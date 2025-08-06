@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>RFID Inventory System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --color-primary: #007cba;
+      --color-primary-hover: #005a8a;
+      --color-bg: #ffffff;
+      --color-bg-light: #f8fafc;
+      --color-text: #1e1e1e;
+      --color-text-secondary: #6c757d;
+      --color-border: #e4e6eb;
+      --radius: 12px;
+      --font-family: 'Inter', sans-serif;
+      --transition-speed: 0.25s;
+      --shadow-light: rgba(0, 0, 0, 0.05);
+      --shadow-medium: rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-family);
+      background: var(--color-bg-light);
+      color: var(--color-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+    }
+
+    header {
+      background: var(--color-bg);
+      padding: 28px 48px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 1px 4px var(--shadow-light);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      border-bottom: 1px solid var(--color-border);
+    }
+    header img {
+      height: 48px;
+      object-fit: contain;
+    }
+    header h1 {
+      font-weight: 700;
+      font-size: 2.4rem;
+      color: var(--color-primary);
+      margin: 0;
+      user-select: none;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 48px auto;
+      padding: 0 24px;
+      display: flex;
+      gap: 36px;
+      /* flex-wrap: wrap; <-- removed to keep sidebar on right */
+    }
+
+    .main-panel {
+      flex: 3 1 500px; /* reduced from 620px */
+      background: var(--color-bg);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      box-shadow: 0 10px 30px var(--shadow-light);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar {
+      flex: 1 1 200px; /* reduced from 280px */
+      background: var(--color-bg);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      box-shadow: 0 10px 30px var(--shadow-light);
+      color: var(--color-text-secondary);
+      font-weight: 600;
+      font-size: 1.15rem;
+    }
+
+    .sidebar h3 {
+      margin-top: 0;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: var(--color-primary);
+      margin-bottom: 24px;
+      letter-spacing: 0.04em;
+    }
+
+    .controls {
+      display: flex;
+      gap: 18px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: transparent;
+      border: 2px solid var(--color-primary);
+      border-radius: var(--radius);
+      padding: 14px 28px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--color-primary);
+      cursor: pointer;
+      transition: all var(--transition-speed) ease;
+      box-shadow: 0 4px 6px var(--shadow-light);
+      user-select: none;
+      min-width: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    button:hover:enabled {
+      background: var(--color-primary);
+      color: white;
+      box-shadow: 0 8px 20px var(--shadow-medium);
+      transform: translateY(-2px);
+    }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+      box-shadow: none;
+      transform: none;
+      background: transparent;
+      color: var(--color-primary);
+    }
+
+    #spinner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      color: var(--color-primary);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      user-select: none;
+      font-size: 1.05rem;
+    }
+    #spinner.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 10px;
+    }
+
+    th, td {
+      padding: 16px 20px;
+      text-align: left;
+      vertical-align: middle;
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--color-text);
+    }
+
+    thead th {
+      border-bottom: 2px solid var(--color-border);
+      color: var(--color-primary);
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.07em;
+    }
+
+    tbody tr {
+      background: var(--color-bg-light);
+      border-radius: var(--radius);
+      box-shadow: 0 6px 15px var(--shadow-light);
+      transition: box-shadow 0.3s ease;
+      cursor: default;
+    }
+
+    tbody tr:hover {
+      box-shadow: 0 8px 30px var(--shadow-medium);
+      background: #e3f2fd;
+    }
+
+    td img {
+      width: 100px;
+      height: 64px;
+      border-radius: 12px;
+      object-fit: contain;
+      background: #f9fbff;
+      padding: 6px;
+      box-shadow: inset 0 0 8px #d0dff9;
+    }
+
+    .summary-row td {
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--color-primary);
+      text-align: right;
+      padding-top: 24px;
+      border-top: 2px solid var(--color-border);
+      background: transparent;
+    }
+
+    .checkout-btn {
+      margin-top: 28px;
+      padding: 16px 36px;
+      background: var(--color-primary);
+      border: none;
+      border-radius: var(--radius);
+      color: white;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background var(--transition-speed), transform 0.15s ease;
+      box-shadow: 0 8px 20px rgba(0, 124, 186, 0.3);
+      user-select: none;
+      min-width: 180px;
+      align-self: flex-end;
+    }
+    .checkout-btn:hover {
+      background: var(--color-primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(0, 90, 138, 0.5);
+    }
+
+    .checkout-btn:focus,
+    button:focus {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(0, 124, 186, 0.4);
+    }
+
+    @media (max-width: 900px) {
+      main {
+        flex-direction: column;
+        margin: 32px 16px;
+      }
+      .main-panel, .sidebar {
+        width: 100%;
+      }
+      .checkout-btn {
+        width: 100%;
+        align-self: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="https://rfid4u.com/wp-content/uploads/2020/02/RFID4U-logo_color.svg" alt="RFID Logo" />
+    <h1> TAGMATIKS INVENTORY SOFTWARE </h1>
+  </header>
+  <main>
+    <section class="main-panel">
+      <div class="controls">
+        <button id="scanToggleBtn" onclick="toggleScan()">▶ Start Scan</button>
+        <button onclick="clearCart()">🧺 Clear Cart</button>
+        <div id="spinner" aria-live="polite" role="status" aria-atomic="true">
+          <svg width="24" height="24" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="var(--color-primary)">
+            <g fill="none" fill-rule="evenodd">
+              <g transform="translate(1 1)" stroke-width="4">
+                <circle stroke-opacity=".3" cx="18" cy="18" r="18" />
+                <path d="M36 18c0-9.94-8.06-18-18-18">
+                  <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="1s" repeatCount="indefinite" />
+                </path>
+              </g>
+            </g>
+          </svg>
+          <span>Scanning...</span>
+        </div>
+      </div>
+      <table aria-label="RFID Inventory Cart">
+        <thead>
+          <tr><th>Image</th><th>PRODUCT</th><th>QTY</th><th>PRICE</th><th>SUBTOTAL</th><th>TAG ID</th></tr>
+        </thead>
+        <tbody id="cart-body">
+          <tr><td colspan="6" style="text-align:center; color: var(--color-text-secondary); font-style: italic;">Waiting for scan...</td></tr>
+        </tbody>
+        <tfoot>
+          <tr class="summary-row">
+            <td colspan="5">Total</td>
+            <td>₹<span id="cart-total">0</span></td>
+          </tr>
+        </tfoot>
+      </table>
+      <button onclick="checkoutRedirect()" class="checkout-btn" aria-label="Proceed to payment">✅ Checkout</button>
+    </section>
+    <aside class="sidebar" aria-label="Live Summary">
+      <h3>Live Summary</h3>
+      <p><strong>Items:</strong> <span id="item-count">0</span></p>
+      <p><strong>Total:</strong> ₹<span id="cart-total-sidebar">0</span></p>
+      <p><strong>Tags Scanned:</strong> <span id="tag-count">0</span></p>
+    </aside>
+  </main>
+
+<script>
+  let cart = {};
+  let scannedCount = 0;
+  let processedTags = new Set();
+  let scanInterval;
+  let isScanning = false;
+
+  async function fetchTags() {
+    try {
+      const res = await fetch('/inventory');
+      const tags = await res.json();
+      tags.forEach(tag => {
+        if (!processedTags.has(tag.epc)) {
+          processedTags.add(tag.epc);
+          cart[tag.epc] = {
+            name: tag.name || "Unknown",
+            price: tag.price || 0,
+            url: tag.url || "",
+            qty: 1,
+            epc: tag.epc
+          };
+        }
+      });
+      scannedCount = processedTags.size;
+      renderCart();
+    } catch (err) {
+      console.error("Error fetching tags:", err);
+    }
+  }
+
+  function toggleScan() {
+    const btn = document.getElementById('scanToggleBtn');
+    const spinner = document.getElementById('spinner');
+
+    if (isScanning) return;
+
+    isScanning = true;
+    btn.disabled = true;
+    spinner.classList.add('show');
+    cart = {};
+    processedTags.clear();
+    scannedCount = 0;
+    renderCart();
+
+    fetch('/start-scan', { method: 'POST' });
+    scanInterval = setInterval(fetchTags, 500);
+
+    setTimeout(() => {
+      clearInterval(scanInterval);
+      fetch('/stop-scan', { method: 'POST' });
+      spinner.classList.remove('show');
+      isScanning = false;
+      btn.disabled = false;
+    }, 10000); // 10 seconds
+  }
+
+  function renderCart() {
+    const body = document.getElementById('cart-body');
+    const totalDisplay = document.getElementById('cart-total');
+    const sidebarCount = document.getElementById('item-count');
+    const sidebarTotal = document.getElementById('cart-total-sidebar');
+    const tagCounter = document.getElementById('tag-count');
+
+    body.innerHTML = '';
+    let total = 0, count = 0;
+
+    for (let epc in cart) {
+      const p = cart[epc];
+      const subtotal = p.qty * p.price;
+      total += subtotal;
+      count += p.qty;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><img src="${p.url}" alt="${p.name}" /></td>
+        <td>${p.name}</td>
+        <td>${p.qty}</td>
+        <td>₹${p.price.toFixed(2)}</td>
+        <td>₹${subtotal.toFixed(2)}</td>
+        <td>${p.epc}</td>
+      `;
+      body.appendChild(row);
+    }
+
+    if (count === 0) {
+      body.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--color-text-secondary); font-style: italic;">Waiting for scan...</td></tr>';
+    }
+
+    totalDisplay.textContent = total.toFixed(2);
+    sidebarCount.textContent = count;
+    sidebarTotal.textContent = total.toFixed(2);
+    tagCounter.textContent = scannedCount;
+  }
+
+  function clearCart() {
+    cart = {};
+    processedTags.clear();
+    scannedCount = 0;
+    renderCart();
+  }
+
+  function checkoutRedirect() {
+    const total = document.getElementById('cart-total').textContent;
+    localStorage.setItem('rfidTotal', total);
+    window.location.href = 'payment.html';
+  }
+</script>
+</body>
+</html>

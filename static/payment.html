@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Payment - TAGMATIKS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --color-primary: #0d6efd;
+      --color-primary-dark: #084ecb;
+      --color-primary-light: #cfe2ff;
+      --color-bg: #f8f9fa;
+      --color-white: #fff;
+      --color-text: #212529;
+      --color-muted: #6c757d;
+      --border-radius: 8px;
+      --shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+      --font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-family);
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 48px 20px;
+    }
+
+    .container {
+      background-color: var(--color-white);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      max-width: 480px;
+      width: 100%;
+      padding: 36px 32px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      margin: 0 0 28px;
+      font-weight: 600;
+      font-size: 2.25rem;
+      color: var(--color-primary);
+      text-align: center;
+      letter-spacing: 0.03em;
+    }
+
+    .bill-summary {
+      background-color: var(--color-primary-light);
+      border-radius: var(--border-radius);
+      padding: 24px;
+      margin-bottom: 36px;
+      box-shadow: inset 0 0 12px rgba(13, 110, 253, 0.1);
+      text-align: center;
+    }
+
+    .bill-summary h2 {
+      margin: 0 0 14px;
+      font-weight: 600;
+      font-size: 1.6rem;
+      color: var(--color-primary);
+    }
+
+    .bill-details {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--color-text);
+      letter-spacing: 0.05em;
+    }
+
+    .payment-options {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .payment-button {
+      flex: 1;
+      padding: 16px 0;
+      border-radius: var(--border-radius);
+      border: 2px solid var(--color-primary);
+      background-color: var(--color-white);
+      color: var(--color-primary);
+      font-weight: 700;
+      font-size: 1.15rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow);
+      text-align: center;
+      user-select: none;
+      letter-spacing: 0.02em;
+    }
+
+    .payment-button:hover {
+      background-color: var(--color-primary);
+      color: var(--color-white);
+      box-shadow: 0 8px 25px rgba(13, 110, 253, 0.5);
+      transform: translateY(-3px);
+    }
+
+    .payment-button.active {
+      background-color: var(--color-primary);
+      color: var(--color-white);
+      box-shadow: 0 8px 25px rgba(13, 110, 253, 0.7);
+      transform: translateY(-3px);
+      pointer-events: none;
+    }
+
+    .payment-content {
+      min-height: 280px;
+      padding: 28px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      background-color: #ffffff;
+    }
+
+    #upi-qr {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      font-weight: 600;
+      font-size: 1.15rem;
+      color: var(--color-primary);
+    }
+
+    #upi-qr canvas {
+      box-shadow: 0 6px 20px rgba(13, 110, 253, 0.3);
+      border-radius: var(--border-radius);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    label {
+      font-weight: 600;
+      color: var(--color-text);
+      font-size: 1rem;
+      letter-spacing: 0.02em;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="month"],
+    input[type="password"] {
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1.8px solid #ced4da;
+      font-size: 1rem;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      font-family: var(--font-family);
+      letter-spacing: 0.02em;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 10px var(--color-primary);
+    }
+
+    .submit-btn {
+      margin-top: 16px;
+      padding: 14px 0;
+      background-color: var(--color-primary);
+      color: var(--color-white);
+      border: none;
+      font-weight: 700;
+      font-size: 1.25rem;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      letter-spacing: 0.03em;
+    }
+
+    .submit-btn:hover {
+      background-color: var(--color-primary-dark);
+      transform: translateY(-3px);
+    }
+
+    #message {
+      margin-top: 28px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--color-primary);
+      letter-spacing: 0.02em;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 24px 20px;
+      }
+      .payment-options {
+        flex-direction: column;
+        gap: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Bill Summary</h1>
+    <div class="bill-summary">
+      <h2>Total Amount</h2>
+      <div class="bill-details" id="total-amount">₹0.00</div>
+    </div>
+
+    <div class="payment-options">
+      <button id="upi-btn" class="payment-button">Pay with UPI</button>
+      <button id="card-btn" class="payment-button">Pay with Card</button>
+    </div>
+
+    <div class="payment-content" id="payment-content">
+      <p style="text-align:center; color:#6c757d; font-style: italic;">
+        Select a payment method above to continue.
+      </p>
+    </div>
+
+    <div id="message"></div>
+  </div>
+
+  <script>
+    const totalAmountEl = document.getElementById('total-amount');
+    const upiBtn = document.getElementById('upi-btn');
+    const cardBtn = document.getElementById('card-btn');
+    const paymentContent = document.getElementById('payment-content');
+    const messageEl = document.getElementById('message');
+
+    let totalAmount = localStorage.getItem('rfidTotal') || '0.00';
+    totalAmount = parseFloat(totalAmount).toFixed(2);
+    totalAmountEl.textContent = `₹${totalAmount}`;
+
+    const upiID = "yourupiid@bank";
+
+    function clearActive() {
+      upiBtn.classList.remove('active');
+      cardBtn.classList.remove('active');
+      messageEl.textContent = '';
+    }
+
+    function showUPI() {
+      clearActive();
+      upiBtn.classList.add('active');
+      paymentContent.innerHTML = `
+        <div id="upi-qr">
+          <div>Scan to Pay</div>
+          <canvas id="qr-code"></canvas>
+          <div><strong>UPI ID:</strong> ${upiID}</div>
+          <small style="color:#6c757d;">Open your UPI app and scan the QR code above</small>
+        </div>
+      `;
+
+      const upiPayload = `upi://pay?pa=${encodeURIComponent(upiID)}&pn=TAGMATIKS&am=${totalAmount}&cu=INR`;
+      const canvas = document.getElementById('qr-code');
+      QRCode.toCanvas(canvas, upiPayload, { width: 220 }, function (error) {
+        if (error) console.error(error);
+      });
+    }
+
+    function showCardForm() {
+      clearActive();
+      cardBtn.classList.add('active');
+      paymentContent.innerHTML = `
+        <form id="card-form">
+          <label for="cardnumber">Card Number</label>
+          <input type="text" id="cardnumber" name="cardnumber" placeholder="1234 5678 9012 3456" maxlength="19" inputmode="numeric" required pattern="\\d{13,19}" />
+
+          <label for="expiry">Expiry Date</label>
+          <input type="month" id="expiry" name="expiry" required />
+
+          <label for="cvv">CVV</label>
+          <input type="password" id="cvv" name="cvv" maxlength="4" placeholder="123" required pattern="\\d{3,4}" inputmode="numeric" />
+
+          <label for="name">Name on Card</label>
+          <input type="text" id="name" name="name" placeholder="Full Name" required />
+
+          <button type="submit" class="submit-btn">Pay ₹${totalAmount}</button>
+        </form>
+      `;
+
+      const form = document.getElementById('card-form');
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        messageEl.style.color = 'var(--color-primary)';
+        messageEl.textContent = 'Payment successful! Thank you for your purchase.';
+      });
+    }
+
+    upiBtn.addEventListener('click', showUPI);
+    cardBtn.addEventListener('click', showCardForm);
+  </script>
+</body>
+</html>
