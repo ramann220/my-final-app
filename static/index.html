@@ -338,26 +338,31 @@
     const btn = document.getElementById('scanToggleBtn');
     const spinner = document.getElementById('spinner');
 
-    if (isScanning) return;
-
-    isScanning = true;
-    btn.disabled = true;
-    spinner.classList.add('show');
-    cart = {};
-    processedTags.clear();
-    scannedCount = 0;
-    renderCart();
-
-    fetch('/start-scan', { method: 'POST' });
-    scanInterval = setInterval(fetchTags, 500);
-
-    setTimeout(() => {
+    if (isScanning) {
+      // If scanning, stop the process
       clearInterval(scanInterval);
       fetch('/stop-scan', { method: 'POST' });
       spinner.classList.remove('show');
       isScanning = false;
+      btn.innerHTML = '▶ Start Scan';
       btn.disabled = false;
-    }, 10000); // 10 seconds
+    } else {
+      // If not scanning, start the process
+      isScanning = true;
+      btn.disabled = true;
+      spinner.classList.add('show');
+      btn.innerHTML = '⏸ Stop Scan';
+
+      // Clear the cart on the server and front-end
+      clearCart();
+      fetch('/start-scan', { method: 'POST' });
+      
+      // Start fetching tags every 500ms
+      scanInterval = setInterval(fetchTags, 500);
+
+      // You can re-enable the button after the initial server request
+      setTimeout(() => { btn.disabled = false; }, 1000);
+    }
   }
 
   function renderCart() {
@@ -398,11 +403,16 @@
     tagCounter.textContent = scannedCount;
   }
 
-  function clearCart() {
+  async function clearCart() {
     cart = {};
     processedTags.clear();
     scannedCount = 0;
     renderCart();
+    try {
+      await fetch('/start-scan', { method: 'POST' });
+    } catch (err) {
+      console.error("Error clearing cart on server:", err);
+    }
   }
 
   function checkoutRedirect() {
